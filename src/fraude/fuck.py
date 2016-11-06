@@ -1,7 +1,7 @@
 '''
 Created on 06/11/2016
 
-@author: ernesto
+#@author: ernesto
 '''
 import math
 import logging
@@ -9,7 +9,7 @@ import logging
 '''
 Created on 06/11/2016
 
-@author: ernesto
+#@author: ernesto
 https://www.hackerrank.com/challenges/closest-numbers/submissions/code/31624162
 '''
 
@@ -19,6 +19,22 @@ nivel_log = logging.ERROR
 #nivel_log = logging.DEBUG
 logger_cagada = None
 
+#@profile
+def binary_search(seq, t):
+    mini = 0
+    maxi = len(seq) - 1
+    while (maxi - mini >= 2):
+        m = (mini + maxi) >> 1
+        if seq[m]< t:
+            mini = m + 1
+        else:
+            maxi = m - 1
+        
+    if(t >= seq[maxi]):
+        return maxi + 1
+    if(t >= seq[mini]):
+        return maxi
+    return mini
 
 def insert_sort(numeros):
         alist = list(numeros)
@@ -34,21 +50,26 @@ def insert_sort(numeros):
 
         return alist
     
+#@profile
 def fraude_fuck_insertar_num(numeros, num_nuev):
     idx_inser = 0
-    for idx_inser in range(len(numeros)):
-        if(num_nuev < numeros[idx_inser]):
-            break
-            
-    if(idx_inser == len(numeros) - 1 and num_nuev >= numeros[-1]):
-        idx_inser += 1
+#    for idx_inser in range(len(numeros)):
+#        if(num_nuev < numeros[idx_inser]):
+#            break
+#    if(idx_inser == len(numeros) - 1 and num_nuev >= numeros[-1]):
+#        idx_inser += 1
+
+#    idx_inser = binary_search(numeros, num_nuev)
         
-    numeros.insert(idx_inser , num_nuev)
+#    numeros.insert(idx_inser , num_nuev)
+    numeros.append(num_nuev)
+    numeros.sort()
 
 def fraude_fuck_eliminar_num(numeros, viejo_pendejo):
     idx_elim = numeros.index(viejo_pendejo)
     del numeros[idx_elim]
 
+#@profile
 def fraude_fuck_core(numeros, nuevo_num, viejo_pendejo):
     medi_ano = 0
     tam_nums = len(numeros)
@@ -67,19 +88,18 @@ def fraude_fuck_core(numeros, nuevo_num, viejo_pendejo):
         return 1
     return 0
 
-@profile
+#@profile
 def fraude_fuck_main():
         contador_alerts = 0
         lineas = list(sys.stdin)
         _, tam_muest = [int(x) for x in lineas[0].strip().split(" ")]
         numeros = [int(x) for x in lineas[1].strip().split(" ")]
-        logger_cagada.debug("numeros %s" % numeros)
 
 #        numeros_ord=sorted(numeros)
         numeros_ord = insert_sort(numeros[:tam_muest])
-        
+        logger_cagada.debug("numeros %s" % numeros)
+      
         idx_sig_a_borrar = 0
-        logger_cagada.debug("nums ord original %s " % numeros_ord)
         contador_alerts = fraude_fuck_core(numeros_ord, 0, 0)
         
         for nume in numeros[tam_muest:]:

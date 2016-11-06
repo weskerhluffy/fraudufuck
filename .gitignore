@@ -1,2 +1,6 @@
 
 src/fraude/shit
+
+*.lprof
+
+src/fraude/.swp
