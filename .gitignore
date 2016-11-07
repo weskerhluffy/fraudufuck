@@ -8,3 +8,9 @@ src/fraude/.swp
 *.lprof
 
 *.lprof
+
+src/frauducaca
+
+*.plist
+
+src/frauducaca.dSYM/Contents/Resources/DWARF/frauducaca
