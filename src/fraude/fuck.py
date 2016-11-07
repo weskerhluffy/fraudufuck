@@ -16,7 +16,7 @@ https://www.hackerrank.com/challenges/closest-numbers/submissions/code/31624162
 import sys
 
 nivel_log = logging.ERROR
-#nivel_log = logging.DEBUG
+# nivel_log = logging.DEBUG
 logger_cagada = None
 
 mediano_act = None
@@ -64,6 +64,7 @@ def insert_sort(numeros):
     
 # @profile
 def fraude_fuck_insertar_num(numeros, num_nuev, medi_ano):
+    global contador_mierda
     idx_inser = 0
 #    for idx_inser in range(len(numeros)):
 #        if(num_nuev < numeros[idx_inser]):
@@ -74,6 +75,25 @@ def fraude_fuck_insertar_num(numeros, num_nuev, medi_ano):
     mitad_numes = tam_numeros >> 1
     if(num_nuev > medi_ano):
         idx_inser = binary_search(numeros, num_nuev, mitad_numes + 1, tam_numeros)
+        
+        mini = mitad_numes + 1
+        maxi = tam_numeros - 1
+        logger_cagada.debug("mini %u maxi %u" % (mini, maxi))
+        while (maxi - mini >= 2):
+            contador_mierda += 1
+            m = (mini + maxi) >> 1
+            if numeros[m] < num_nuev:
+                mini = m + 1
+            else:
+                maxi = m - 1
+            
+        logger_cagada.debug("despues del bucle mini %u maxi %u" % (mini, maxi))
+        if(num_nuev >= numeros[maxi]):
+            idx_inser = maxi + 1
+        if(num_nuev >= numeros[mini]):
+            idx_inser = maxi
+        idx_inser = mini
+
     else:
         if(num_nuev < medi_ano):
             idx_inser = binary_search(numeros, num_nuev, 0, mitad_numes)
