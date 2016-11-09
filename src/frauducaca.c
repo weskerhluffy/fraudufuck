@@ -32,7 +32,7 @@ typedef enum BOOLEANOS {
 #define FRAUDUCACA_VALOR_INVALIDO -1
 #define FRAUDUCACA_MAX_VALORES_INT ((unsigned int)((unsigned int)INT_MAX-(INT_MIN)))
 
-#define FRAUDUCACA_BUF_STATICO_DUMP_ARBOL (char[1000] ) { '\0' }
+#define FRAUDUCACA_BUF_STATICO (char[10000] ) { '\0' }
 
 #define FRAUDUCACA_VALIDAR_ARBOLINES
 
@@ -45,7 +45,7 @@ typedef enum BOOLEANOS {
 #endif
 
 #if 1
-#define CACA_LOG_MAX_TAM_CADENA 200
+#define CACA_LOG_MAX_TAM_CADENA 20000
 #define CACA_COMUN_ASSERT_DUROTE 0
 #define CACA_COMUN_ASSERT_SUAVECITO 1
 #define CACA_COMUN_ASSERT_NIMADRES 2
@@ -149,6 +149,52 @@ void caca_log_debug_func(const char *format, ...) {
 	vprintf(formato, arg2);
 	va_end(arg2);
 	va_end(arg);
+}
+
+static char *caca_arreglo_a_cadena_natural(natural *arreglo,
+		natural tam_arreglo, char *buffer) {
+	int i;
+	char *ap_buffer = NULL;
+	int characteres_escritos = 0;
+#ifdef ONLINE_JUDGE
+	return NULL;
+#endif
+
+	memset(buffer, 0, 100);
+	ap_buffer = buffer;
+
+	for (i = 0; i < tam_arreglo; i++) {
+		characteres_escritos += sprintf(ap_buffer + characteres_escritos, "%2u",
+				*(arreglo + i));
+		if (i < tam_arreglo - 1) {
+			*(ap_buffer + characteres_escritos++) = ',';
+		}
+	}
+	*(ap_buffer + characteres_escritos) = '\0';
+	return ap_buffer;
+}
+
+static char *caca_arreglo_a_cadena(tipo_dato *arreglo, int tam_arreglo,
+		char *buffer) {
+	int i;
+	char *ap_buffer = NULL;
+	int characteres_escritos = 0;
+#ifdef ONLINE_JUDGE
+	return NULL;
+#endif
+
+	memset(buffer, 0, 100);
+	ap_buffer = buffer;
+
+	for (i = 0; i < tam_arreglo; i++) {
+		characteres_escritos += sprintf(ap_buffer + characteres_escritos,
+				"%2u", *(arreglo + i));
+		if (i < tam_arreglo - 1) {
+			*(ap_buffer + characteres_escritos++) = ',';
+		}
+	}
+	*(ap_buffer + characteres_escritos) = '\0';
+	return ap_buffer;
 }
 
 #endif
@@ -470,36 +516,20 @@ tipo_dato heap_shit_delete(heap_shit *heap_ctx) {
 	natural heap_size = heap_ctx->heap_size;
 	int ret = 0;
 	natural idx_pos = 0;
-	natural idx_pos_las_elem_ocur = 0;
+	natural idx_pos_las_elem_ocur = FRAUDUCACA_VALOR_INVALIDO;
 	khiter_t iter = 0;
 	natural child, now;
 	tipo_dato minElement, lastElement;
 	tipo_dato *heap;
 	heap = heap_ctx->heap;
 
-	iter = kh_get_caca(heap_ctx->tablin_idx_pos_en_heap, heap_size);
-	assert_timeout(iter!=kh_end(heap_ctx->tablin_idx_pos_en_heap));
-	idx_pos_las_elem_ocur = kh_val(heap_ctx->tablin_idx_pos_en_heap,iter);
-	kh_del_caca(heap_ctx->tablin_idx_pos_en_heap, iter);
-
-	iter = kh_get_caca(heap_ctx->tablin_idx_pos_en_heap, 1);
-	assert_timeout(iter!=kh_end(heap_ctx->tablin_idx_pos_en_heap));
-	idx_pos = kh_val(heap_ctx->tablin_idx_pos_en_heap,iter);
-	kh_del_caca(heap_ctx->tablin_idx_pos_en_heap, iter);
-	if (heap_ctx->num_indices_valores[heap[1]] > 1) {
-		natural idx_ocurrencia_ultimo =
-				heap_ctx->indices_valores[heap[1]][--heap_ctx->num_indices_valores[heap[1]]];
-		heap_ctx->indices_valores[heap[1]][idx_pos] = idx_ocurrencia_ultimo;
-		iter = kh_get_caca(heap_ctx->tablin_idx_pos_en_heap,
-				idx_ocurrencia_ultimo);
+	if (heap_size > 1) {
+		iter = kh_get_caca(heap_ctx->tablin_idx_pos_en_heap, heap_size);
 		assert_timeout(iter!=kh_end(heap_ctx->tablin_idx_pos_en_heap));
-		kh_val(heap_ctx->tablin_idx_pos_en_heap,iter)=idx_pos;
-		heap_ctx->indices_valores[heap[1]][heap_ctx->num_indices_valores[heap[1]]
-				+ 1] = 0;
-
-	} else {
-		heap_ctx->indices_valores[heap[1]][--heap_ctx->num_indices_valores[heap[1]]] =
-				0;
+		idx_pos_las_elem_ocur = kh_val(heap_ctx->tablin_idx_pos_en_heap,iter);
+		kh_del_caca(heap_ctx->tablin_idx_pos_en_heap, iter);
+		caca_log_debug("el mapeo inverso del ultimo elemento %u es %u",
+				heap_size, idx_pos_las_elem_ocur);
 	}
 
 	/* heap[1] is the minimum element. So we remove heap[1]. Size of the heap is decreased.
@@ -508,6 +538,41 @@ tipo_dato heap_shit_delete(heap_shit *heap_ctx) {
 	 Again See if the last element fits in that place.*/
 	minElement = heap[1];
 	lastElement = heap[heap_size--];
+
+	iter = kh_get_caca(heap_ctx->tablin_idx_pos_en_heap, 1);
+	assert_timeout(iter!=kh_end(heap_ctx->tablin_idx_pos_en_heap));
+	idx_pos = kh_val(heap_ctx->tablin_idx_pos_en_heap,iter);
+	kh_del_caca(heap_ctx->tablin_idx_pos_en_heap, iter);
+	caca_log_debug("el mapeo inverso del tope que se elimina %u es %u", 1,
+			idx_pos);
+	if (heap_ctx->num_indices_valores[minElement] > 1) {
+		natural idx_ocurrencia_ultimo =
+				heap_ctx->indices_valores[minElement][--heap_ctx->num_indices_valores[minElement]];
+		heap_ctx->indices_valores[minElement][idx_pos] = idx_ocurrencia_ultimo;
+		if (minElement == lastElement
+				&& idx_ocurrencia_ultimo == heap_size + 1) {
+			caca_log_debug(
+					"como solo ay un numero en el heap la ultima ocurrencia es la que se actualizara el idx de la ocurrencia a actualizar se modifica de %u a %u",
+					idx_pos_las_elem_ocur, idx_pos);
+			heap_ctx->indices_valores[minElement][idx_pos] =
+					FRAUDUCACA_VALOR_INVALIDO;
+			idx_pos_las_elem_ocur = idx_pos;
+		} else {
+			iter = kh_get_caca(heap_ctx->tablin_idx_pos_en_heap,
+					idx_ocurrencia_ultimo);
+			caca_log_debug("el iter de la pos %u de %u es %u",
+					idx_ocurrencia_ultimo, minElement, iter);
+			assert_timeout(iter!=kh_end(heap_ctx->tablin_idx_pos_en_heap));
+			kh_val(heap_ctx->tablin_idx_pos_en_heap,iter)=idx_pos;
+		}
+		heap_ctx->indices_valores[minElement][heap_ctx->num_indices_valores[minElement]
+				+ 1] = 0;
+
+	} else {
+		heap_ctx->indices_valores[minElement][--heap_ctx->num_indices_valores[minElement]] =
+				0;
+	}
+
 	/* now refers to the index at which we are now */
 	for (now = 1; now * 2 <= heap_size; now = child) {
 		/* child is the index of the element which is minimum among both the children */
@@ -540,10 +605,13 @@ tipo_dato heap_shit_delete(heap_shit *heap_ctx) {
 			break;
 		}
 	}
-	iter = kh_put_caca(heap_ctx->tablin_idx_pos_en_heap, now, &ret);
-	assert_timeout(ret);
-	kh_val(heap_ctx->tablin_idx_pos_en_heap,iter)=idx_pos_las_elem_ocur;
-	heap_ctx->indices_valores[lastElement][idx_pos_las_elem_ocur] = now;
+
+	if (idx_pos_las_elem_ocur != FRAUDUCACA_VALOR_INVALIDO) {
+		iter = kh_put_caca(heap_ctx->tablin_idx_pos_en_heap, now, &ret);
+		assert_timeout(ret);
+		kh_val(heap_ctx->tablin_idx_pos_en_heap,iter)=idx_pos_las_elem_ocur;
+		heap_ctx->indices_valores[lastElement][idx_pos_las_elem_ocur] = now;
+	}
 	heap[now] = lastElement;
 	heap_ctx->heap_size = heap_size;
 	return minElement;
@@ -551,8 +619,22 @@ tipo_dato heap_shit_delete(heap_shit *heap_ctx) {
 
 void heap_shit_dumpear(heap_shit *heap_ctx) {
 	natural heap_size = heap_ctx->heap_size;
+	kh_caca_t *h = NULL;
 	for (int i = 0; i <= heap_size; i++) {
-		caca_log_debug("mierda %u es %u\n", i, heap_ctx->heap[i]);
+		caca_log_debug("mierda %u es %u", i, heap_ctx->heap[i]);
+	}
+	h = heap_ctx->tablin_idx_pos_en_heap;
+	caca_log_debug("los mapeos inversos:");
+	for (int k = kh_begin(h); k != kh_end(h); ++k) {
+		if (kh_exist(h, k))
+			caca_log_debug("la llave %u mapea a %u", kh_key(h,k), kh_val(h,k));
+	}
+	caca_log_debug("las ocurrencias de cada pendejo:");
+	for (int i = 0; i < MAX_VALOR; i++) {
+		if (heap_ctx->num_indices_valores[i]) {
+			caca_log_debug("el num %u tiene las ocurrencias %s", i,
+					caca_arreglo_a_cadena_natural(heap_ctx->indices_valores[i],heap_ctx->num_indices_valores[i],FRAUDUCACA_BUF_STATICO));
+		}
 	}
 }
 
@@ -560,30 +642,37 @@ void heap_shit_dumpear(heap_shit *heap_ctx) {
 int main() {
 	bool es_min = verdadero;
 	heap_shit *heap_ctx = &(heap_shit ) { 0 };
-	tipo_dato *caca_prueba = NULL;
+	tipo_dato cacasos_prueba[][10] = { { 0, 2, 3, 4, 5, 6, 7, 8, 9, 10 }, { 10,
+			9, 8, 7, 6, 5, 4, 3, 2, 0 }, { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }, { 1,
+			2, 3, 4, 5, 6, 7, 8, 9, 10 }, { 10, 9, 8, 7, 6, 5, 4, 2, 1 }, { 1,
+			1, 1, 1, 1, 2, 2, 2, 2, 2 }, { 2, 2, 2, 2, 2, 1, 1, 1, 1, 1 }, { 1,
+			1, 1, 2, 2, 2, 2, 3, 3, 3 } };
 	int number_of_elements;
+	natural num_cacasos = 0;
 //	scanf("%d", &number_of_elements);
 	int iter, element;
-	heap_shit_init(heap_ctx, es_min);
-	if (!es_min) {
-		caca_prueba = (tipo_dato[] ) { 0, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
-	} else {
-		caca_prueba = (tipo_dato[] ) { 10, 9, 8, 7, 6, 5, 4, 3, 2, 0 };
-	}
 	number_of_elements = 10;
 	printf("nume elems %u\n", number_of_elements);
-	for (iter = 0; iter < number_of_elements; iter++) {
+	num_cacasos = sizeof(cacasos_prueba) / 10;
+	for (int i = 0; i < num_cacasos; i++) {
+		tipo_dato *cacaso_act = cacasos_prueba[i];
+		for (bool j = falso; j <= verdadero; j++) {
+			caca_log_debug("cacaso %s",
+					caca_arreglo_a_cadena(cacaso_act,10,FRAUDUCACA_BUF_STATICO));
+			heap_shit_init(heap_ctx, j);
+			for (iter = 0; iter < number_of_elements; iter++) {
 //		scanf("%d", &element);
-		element = caca_prueba[iter];
-		heap_shit_insert(heap_ctx, element);
-//		printf("dumpeando cabron ins\n");
-//		heap_shit_dumpear(heap_ctx);
+				element = cacaso_act[iter];
+				heap_shit_insert(heap_ctx, element);
+				caca_log_debug("dumpeando cabron ins");
+				heap_shit_dumpear(heap_ctx);
+			}
+			for (iter = 0; iter < number_of_elements; iter++) {
+				printf("%d ", heap_shit_delete(heap_ctx));
+				caca_log_debug("dumpeando cabron del");
+				heap_shit_dumpear(heap_ctx);
+			}
+		}
 	}
-	for (iter = 0; iter < number_of_elements; iter++) {
-		printf("%d ", heap_shit_delete(heap_ctx));
-//		printf("dumpeando cabron del\n");
-//		heap_shit_dumpear(heap_ctx);
-	}
-	printf("\n");
 	return 0;
 }
