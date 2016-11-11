@@ -2,6 +2,7 @@
 #include<limits.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <string.h>
 
 #include <sys/time.h>
 #include <math.h>
@@ -34,7 +35,7 @@ typedef enum BOOLEANOS {
 
 #define FRAUDUCACA_BUF_STATICO (char[10000] ) { '\0' }
 
-#define FRAUDUCACA_VALIDAR_ARBOLINES
+//#define FRAUDUCACA_VALIDAR_ARBOLINES
 
 #ifdef FRAUDUCACA_VALIDAR_ARBOLINES
 #define CACA_COMUN_LOG
@@ -187,14 +188,53 @@ static char *caca_arreglo_a_cadena(tipo_dato *arreglo, int tam_arreglo,
 	ap_buffer = buffer;
 
 	for (i = 0; i < tam_arreglo; i++) {
-		characteres_escritos += sprintf(ap_buffer + characteres_escritos,
-				"%2u", *(arreglo + i));
+		characteres_escritos += sprintf(ap_buffer + characteres_escritos, "%2u",
+				*(arreglo + i));
 		if (i < tam_arreglo - 1) {
 			*(ap_buffer + characteres_escritos++) = ',';
 		}
 	}
 	*(ap_buffer + characteres_escritos) = '\0';
 	return ap_buffer;
+}
+
+static inline bool caca_comun_checa_bit(bitch_vector *bits,
+		unsigned long posicion) {
+	bool res = falso;
+	int idx_arreglo = 0;
+	int idx_registro = 0;
+
+	idx_arreglo = posicion / 64;
+	idx_registro = posicion % 64;
+
+	res = !!(bits[idx_arreglo]
+			& (bitch_vector) ((bitch_vector) 1 << idx_registro));
+
+	return res;
+}
+
+static inline void caca_comun_asigna_bit(bitch_vector *bits,
+		unsigned long posicion) {
+	int idx_arreglo = 0;
+	int idx_registro = 0;
+
+	idx_arreglo = posicion / 64;
+	idx_registro = posicion % 64;
+
+	bits[idx_arreglo] |= (bitch_vector) ((bitch_vector) 1 << idx_registro);
+
+}
+
+static inline void caca_comun_limpia_bit(bitch_vector *bits,
+		unsigned long posicion) {
+	int idx_arreglo = 0;
+	int idx_registro = 0;
+
+	idx_arreglo = posicion / 64;
+	idx_registro = posicion % 64;
+
+	bits[idx_arreglo] &= (bitch_vector) ~((bitch_vector) 1 << idx_registro);
+
 }
 
 #endif
@@ -472,6 +512,10 @@ void heap_shit_init(heap_shit *heap, bool es_min) {
 	heap->tablin_idx_pos_en_heap = kh_init_caca();
 }
 
+void heap_shit_fini(heap_shit *heap_ctx) {
+	kh_destroy_caca(heap_ctx->tablin_idx_pos_en_heap);
+}
+
 /*Insert an element into the heap */
 void heap_shit_insert(heap_shit *heap_ctx, tipo_dato element) {
 	natural heap_size = ++heap_ctx->heap_size;
@@ -545,7 +589,8 @@ tipo_dato heap_shit_delete(heap_shit *heap_ctx) {
 	kh_del_caca(heap_ctx->tablin_idx_pos_en_heap, iter);
 	caca_log_debug("el mapeo inverso del tope que se elimina %u es %u", 1,
 			idx_pos);
-	if (heap_ctx->num_indices_valores[minElement] > 1) {
+	if (heap_ctx->num_indices_valores[minElement] > 1
+			&& idx_pos != (heap_ctx->num_indices_valores[minElement] - 1)) {
 		natural idx_ocurrencia_ultimo =
 				heap_ctx->indices_valores[minElement][--heap_ctx->num_indices_valores[minElement]];
 		heap_ctx->indices_valores[minElement][idx_pos] = idx_ocurrencia_ultimo;
@@ -638,6 +683,99 @@ void heap_shit_dumpear(heap_shit *heap_ctx) {
 	}
 }
 
+void heap_shit_valida_referencias_inversas(heap_shit *heap_ctx) {
+	natural num_elems = 0;
+	natural num_elems_mapeo = 0;
+	natural heap_size = heap_ctx->heap_size;
+	tipo_dato *heap = heap_ctx->heap;
+	natural (*indices_valores)[MAX_VALOR] = heap_ctx->indices_valores;
+	natural *num_indices_valores = heap_ctx->num_indices_valores;
+	kh_caca_t *tablin_idx_pos_en_heap = heap_ctx->tablin_idx_pos_en_heap;
+	bitch_vector valores_ya_validados[MAX_NUMEROS / 64] = { 0 };
+	for (int i = 1; i < heap_size + 1; i++) {
+		tipo_dato num_act = heap[i];
+		natural *indices_valores_act = indices_valores[num_act];
+		natural num_indices_valores_act = num_indices_valores[num_act];
+		if (num_indices_valores_act
+				&& !caca_comun_checa_bit(valores_ya_validados, num_act)) {
+			for (int j = 0; j < num_indices_valores_act; j++) {
+				int ret = 0;
+				khiter_t iter = 0;
+				tipo_dato num_act_ocu = 0;
+				natural indice_valor_act = 0;
+				natural indice_pos_ocurrencia_en_mapa = 0;
+
+				indice_valor_act = indices_valores_act[j];
+				num_act_ocu = heap[indice_valor_act];
+				assert_timeout(num_act_ocu == num_act);
+
+				iter = kh_get_caca(tablin_idx_pos_en_heap, indice_valor_act);
+				assert_timeout(iter!=kh_end(tablin_idx_pos_en_heap));
+				indice_pos_ocurrencia_en_mapa =
+						kh_val(tablin_idx_pos_en_heap,iter);
+				assert_timeout(j == indice_pos_ocurrencia_en_mapa);
+
+				num_elems++;
+			}
+			caca_comun_asigna_bit(valores_ya_validados, num_act);
+		}
+	}
+	assert_timeout(heap_size == num_elems);
+	kh_caca_t *h = tablin_idx_pos_en_heap;
+	for (int k = kh_begin(h); k != kh_end(h); ++k) {
+		if (kh_exist(h, k)) {
+			natural idx_en_heap = 0;
+			natural idx_en_pos_ocurrencias = 0;
+			natural num_indices_valores_act = 0;
+			tipo_dato num_act = 0;
+
+			idx_en_heap = kh_key(h,k);
+			idx_en_pos_ocurrencias = kh_val(h,k);
+
+			num_act = heap[idx_en_heap];
+
+			num_indices_valores_act = num_indices_valores[num_act];
+			assert_timeout(idx_en_pos_ocurrencias < num_indices_valores_act);
+
+			num_elems_mapeo++;
+		}
+	}
+
+	assert_timeout(heap_size == num_elems_mapeo);
+}
+
+void heap_shit_valida_invariante(heap_shit *heap_ctx, natural idx_heap) {
+	natural heap_size = heap_ctx->heap_size;
+	tipo_dato *heap = heap_ctx->heap;
+	if (idx_heap < heap_size) {
+		tipo_dato num_act = heap[idx_heap];
+		natural idx_heap_hijo_izq = (idx_heap << 1) | 1;
+		if (idx_heap_hijo_izq < heap_size) {
+			tipo_dato num_act_hijo_izq = heap[idx_heap_hijo_izq];
+			if (heap_ctx->min) {
+				assert_timeout(num_act <= num_act_hijo_izq);
+			} else {
+				assert_timeout(num_act >= num_act_hijo_izq);
+			}
+		}
+		if (idx_heap_hijo_izq + 1 < heap_size) {
+			tipo_dato num_act_hijo_der = heap[idx_heap_hijo_izq + 1];
+			if (heap_ctx->min) {
+				assert_timeout(num_act <= num_act_hijo_der);
+			} else {
+				assert_timeout(num_act >= num_act_hijo_der);
+			}
+		}
+		heap_shit_valida_invariante(heap_ctx, idx_heap_hijo_izq);
+		heap_shit_valida_invariante(heap_ctx, idx_heap_hijo_izq + 1);
+	}
+}
+
+void heap_shit_valida_mierda(heap_shit *heap_ctx) {
+	heap_shit_valida_referencias_inversas(heap_ctx);
+	heap_shit_valida_invariante(heap_ctx, 1);
+}
+
 #endif
 int main() {
 	bool es_min = verdadero;
@@ -666,12 +804,29 @@ int main() {
 				heap_shit_insert(heap_ctx, element);
 				caca_log_debug("dumpeando cabron ins");
 				heap_shit_dumpear(heap_ctx);
+				heap_shit_valida_mierda(heap_ctx);
 			}
 			for (iter = 0; iter < number_of_elements; iter++) {
 				printf("%d ", heap_shit_delete(heap_ctx));
 				caca_log_debug("dumpeando cabron del");
 				heap_shit_dumpear(heap_ctx);
+				heap_shit_valida_mierda(heap_ctx);
 			}
+			printf("\n");
+			for (iter = 0; iter < number_of_elements; iter++) {
+//		scanf("%d", &element);
+				element = cacaso_act[iter];
+				heap_shit_insert(heap_ctx, element);
+				caca_log_debug("dumpeando cabron ins");
+				heap_shit_dumpear(heap_ctx);
+				heap_shit_valida_mierda(heap_ctx);
+				if (iter % 2) {
+					heap_shit_delete(heap_ctx);
+					heap_shit_valida_mierda(heap_ctx);
+				}
+			}
+			heap_shit_fini(heap_ctx);
+			memset(heap_ctx, 0, sizeof(*heap_ctx));
 		}
 	}
 	return 0;
