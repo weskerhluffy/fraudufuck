@@ -15,7 +15,7 @@
 #include <stdarg.h>
 #endif
 
-typedef char tipo_dato;
+typedef unsigned char tipo_dato;
 typedef unsigned int natural;
 typedef long long entero_largo;
 typedef unsigned long long bitch_vector;
@@ -26,6 +26,7 @@ typedef enum BOOLEANOS {
 
 #define MAX_NUMEROS 200000
 #define MAX_VALOR 200
+#define MAX_INDEX MAX_VALOR+1
 #define TAM_MAX_LINEA (MAX_NUMEROS*4)
 #define FRAUDUCACA_MAX_NUMEROS_POR_HEAP (MAX_NUMEROS>>1)+1
 #define FRAUDUCACA_MAX_NUMEROS_REDONDEADO (1<<(CACA_X_MAX_PROFUNDIDAD-2))
@@ -35,7 +36,7 @@ typedef enum BOOLEANOS {
 
 #define FRAUDUCACA_BUF_STATICO (char[10000] ) { '\0' }
 
-//#define FRAUDUCACA_VALIDAR_ARBOLINES
+#define FRAUDUCACA_VALIDAR_ARBOLINES
 
 #ifdef FRAUDUCACA_VALIDAR_ARBOLINES
 #define CACA_COMUN_LOG
@@ -499,8 +500,8 @@ typedef struct heap_shit {
 	bool min;
 	natural heap_size;
 	tipo_dato heap[FRAUDUCACA_MAX_NUMEROS_POR_HEAP];
-	natural indices_valores[MAX_VALOR][MAX_VALOR];
-	natural num_indices_valores[MAX_VALOR];
+	natural indices_valores[MAX_INDEX][MAX_INDEX];
+	natural num_indices_valores[MAX_INDEX];
 	kh_caca_t *tablin_idx_pos_en_heap;
 } heap_shit;
 
@@ -675,7 +676,7 @@ void heap_shit_dumpear(heap_shit *heap_ctx) {
 			caca_log_debug("la llave %u mapea a %u", kh_key(h,k), kh_val(h,k));
 	}
 	caca_log_debug("las ocurrencias de cada pendejo:");
-	for (int i = 0; i < MAX_VALOR; i++) {
+	for (int i = 0; i < MAX_INDEX; i++) {
 		if (heap_ctx->num_indices_valores[i]) {
 			caca_log_debug("el num %u tiene las ocurrencias %s", i,
 					caca_arreglo_a_cadena_natural(heap_ctx->indices_valores[i],heap_ctx->num_indices_valores[i],FRAUDUCACA_BUF_STATICO));
@@ -688,10 +689,10 @@ void heap_shit_valida_referencias_inversas(heap_shit *heap_ctx) {
 	natural num_elems_mapeo = 0;
 	natural heap_size = heap_ctx->heap_size;
 	tipo_dato *heap = heap_ctx->heap;
-	natural (*indices_valores)[MAX_VALOR] = heap_ctx->indices_valores;
+	natural (*indices_valores)[MAX_INDEX] = heap_ctx->indices_valores;
 	natural *num_indices_valores = heap_ctx->num_indices_valores;
 	kh_caca_t *tablin_idx_pos_en_heap = heap_ctx->tablin_idx_pos_en_heap;
-	bitch_vector valores_ya_validados[MAX_NUMEROS / 64] = { 0 };
+	bitch_vector valores_ya_validados[(MAX_NUMEROS / 64) + 1] = { 0 };
 	for (int i = 1; i < heap_size + 1; i++) {
 		tipo_dato num_act = heap[i];
 		natural *indices_valores_act = indices_valores[num_act];
@@ -749,7 +750,7 @@ void heap_shit_valida_invariante(heap_shit *heap_ctx, natural idx_heap) {
 	tipo_dato *heap = heap_ctx->heap;
 	if (idx_heap < heap_size) {
 		tipo_dato num_act = heap[idx_heap];
-		natural idx_heap_hijo_izq = (idx_heap << 1) | 1;
+		natural idx_heap_hijo_izq = (idx_heap << 1);
 		if (idx_heap_hijo_izq < heap_size) {
 			tipo_dato num_act_hijo_izq = heap[idx_heap_hijo_izq];
 			if (heap_ctx->min) {
@@ -804,13 +805,17 @@ int main() {
 				heap_shit_insert(heap_ctx, element);
 				caca_log_debug("dumpeando cabron ins");
 				heap_shit_dumpear(heap_ctx);
+#ifdef FRAUDUCACA_VALIDAR_ARBOLINES
 				heap_shit_valida_mierda(heap_ctx);
+#endif
 			}
 			for (iter = 0; iter < number_of_elements; iter++) {
 				printf("%d ", heap_shit_delete(heap_ctx));
 				caca_log_debug("dumpeando cabron del");
 				heap_shit_dumpear(heap_ctx);
+#ifdef FRAUDUCACA_VALIDAR_ARBOLINES
 				heap_shit_valida_mierda(heap_ctx);
+#endif
 			}
 			printf("\n");
 			for (iter = 0; iter < number_of_elements; iter++) {
@@ -819,10 +824,31 @@ int main() {
 				heap_shit_insert(heap_ctx, element);
 				caca_log_debug("dumpeando cabron ins");
 				heap_shit_dumpear(heap_ctx);
+#ifdef FRAUDUCACA_VALIDAR_ARBOLINES
 				heap_shit_valida_mierda(heap_ctx);
+#endif
 				if (iter % 2) {
 					heap_shit_delete(heap_ctx);
+#ifdef FRAUDUCACA_VALIDAR_ARBOLINES
 					heap_shit_valida_mierda(heap_ctx);
+#endif
+				}
+			}
+
+			for (iter = 0; iter < MAX_NUMEROS - heap_ctx->heap_size; iter++) {
+//		scanf("%d", &element);
+				element = iter % 201;
+				heap_shit_insert(heap_ctx, element);
+				caca_log_debug("dumpeando cabron ins");
+				heap_shit_dumpear(heap_ctx);
+#ifdef FRAUDUCACA_VALIDAR_ARBOLINES
+				heap_shit_valida_mierda(heap_ctx);
+#endif
+				if (iter % 4) {
+					heap_shit_delete(heap_ctx);
+#ifdef FRAUDUCACA_VALIDAR_ARBOLINES
+					heap_shit_valida_mierda(heap_ctx);
+#endif
 				}
 			}
 			heap_shit_fini(heap_ctx);
