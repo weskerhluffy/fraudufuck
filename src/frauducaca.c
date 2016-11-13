@@ -37,6 +37,7 @@ typedef enum BOOLEANOS {
 #define FRAUDUCACA_BUF_STATICO (char[10000] ) { '\0' }
 
 #define FRAUDUCACA_VALIDAR_ARBOLINES
+//#define FRAUDUCACA_DUMPEAR
 
 #ifdef FRAUDUCACA_VALIDAR_ARBOLINES
 #define CACA_COMUN_LOG
@@ -803,16 +804,22 @@ int main() {
 //		scanf("%d", &element);
 				element = cacaso_act[iter];
 				heap_shit_insert(heap_ctx, element);
-				caca_log_debug("dumpeando cabron ins");
+				caca_log_debug("dumpeando cabron ins caso %u min %u iter %u", i,
+						j, iter);
+#ifdef FRAUDUCACA_DUMPEAR
 				heap_shit_dumpear(heap_ctx);
+#endif
 #ifdef FRAUDUCACA_VALIDAR_ARBOLINES
 				heap_shit_valida_mierda(heap_ctx);
 #endif
 			}
 			for (iter = 0; iter < number_of_elements; iter++) {
 				printf("%d ", heap_shit_delete(heap_ctx));
-				caca_log_debug("dumpeando cabron del");
+				caca_log_debug("dumpeando cabron del caso %u min %u iter %u", i,
+						j, iter);
+#ifdef FRAUDUCACA_DUMPEAR
 				heap_shit_dumpear(heap_ctx);
+#endif
 #ifdef FRAUDUCACA_VALIDAR_ARBOLINES
 				heap_shit_valida_mierda(heap_ctx);
 #endif
@@ -822,8 +829,12 @@ int main() {
 //		scanf("%d", &element);
 				element = cacaso_act[iter];
 				heap_shit_insert(heap_ctx, element);
-				caca_log_debug("dumpeando cabron ins");
+				caca_log_debug(
+						"dumpeando cabron mezcla caso %u min %u iter %u",
+						i, j, iter);
+#ifdef FRAUDUCACA_DUMPEAR
 				heap_shit_dumpear(heap_ctx);
+#endif
 #ifdef FRAUDUCACA_VALIDAR_ARBOLINES
 				heap_shit_valida_mierda(heap_ctx);
 #endif
@@ -839,8 +850,12 @@ int main() {
 //		scanf("%d", &element);
 				element = iter % 201;
 				heap_shit_insert(heap_ctx, element);
-				caca_log_debug("dumpeando cabron ins");
+				caca_log_debug(
+						"dumpeando cabron ins grande caso %u min %u iter %u",
+						i, j, iter);
+#ifdef FRAUDUCACA_DUMPEAR
 				heap_shit_dumpear(heap_ctx);
+#endif
 #ifdef FRAUDUCACA_VALIDAR_ARBOLINES
 				heap_shit_valida_mierda(heap_ctx);
 #endif
