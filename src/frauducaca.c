@@ -40,7 +40,7 @@ typedef enum BOOLEANOS {
 //#define FRAUDUCACA_DUMPEAR
 
 #ifdef FRAUDUCACA_VALIDAR_ARBOLINES
-#define CACA_COMUN_LOG
+//#define CACA_COMUN_LOG
 #endif
 
 #ifdef CACA_COMUN_LOG
@@ -501,7 +501,7 @@ typedef struct heap_shit {
 	bool min;
 	natural heap_size;
 	tipo_dato heap[FRAUDUCACA_MAX_NUMEROS_POR_HEAP];
-	natural indices_valores[MAX_INDEX][MAX_INDEX];
+	natural indices_valores[MAX_INDEX][MAX_NUMEROS];
 	natural num_indices_valores[MAX_INDEX];
 	kh_caca_t *tablin_idx_pos_en_heap;
 } heap_shit;
@@ -690,7 +690,7 @@ void heap_shit_valida_referencias_inversas(heap_shit *heap_ctx) {
 	natural num_elems_mapeo = 0;
 	natural heap_size = heap_ctx->heap_size;
 	tipo_dato *heap = heap_ctx->heap;
-	natural (*indices_valores)[MAX_INDEX] = heap_ctx->indices_valores;
+	natural (*indices_valores)[MAX_NUMEROS] = heap_ctx->indices_valores;
 	natural *num_indices_valores = heap_ctx->num_indices_valores;
 	kh_caca_t *tablin_idx_pos_en_heap = heap_ctx->tablin_idx_pos_en_heap;
 	bitch_vector valores_ya_validados[(MAX_NUMEROS / 64) + 1] = { 0 };
@@ -781,7 +781,7 @@ void heap_shit_valida_mierda(heap_shit *heap_ctx) {
 #endif
 int main() {
 	bool es_min = verdadero;
-	heap_shit *heap_ctx = &(heap_shit ) { 0 };
+	heap_shit *heap_ctx = calloc(1, sizeof(heap_shit));
 	tipo_dato cacasos_prueba[][10] = { { 0, 2, 3, 4, 5, 6, 7, 8, 9, 10 }, { 10,
 			9, 8, 7, 6, 5, 4, 3, 2, 0 }, { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }, { 1,
 			2, 3, 4, 5, 6, 7, 8, 9, 10 }, { 10, 9, 8, 7, 6, 5, 4, 2, 1 }, { 1,
@@ -829,8 +829,7 @@ int main() {
 //		scanf("%d", &element);
 				element = cacaso_act[iter];
 				heap_shit_insert(heap_ctx, element);
-				caca_log_debug(
-						"dumpeando cabron mezcla caso %u min %u iter %u",
+				caca_log_debug("dumpeando cabron mezcla caso %u min %u iter %u",
 						i, j, iter);
 #ifdef FRAUDUCACA_DUMPEAR
 				heap_shit_dumpear(heap_ctx);
@@ -851,8 +850,8 @@ int main() {
 				element = iter % 201;
 				heap_shit_insert(heap_ctx, element);
 				caca_log_debug(
-						"dumpeando cabron ins grande caso %u min %u iter %u",
-						i, j, iter);
+						"dumpeando cabron ins grande caso %u min %u iter %u", i,
+						j, iter);
 #ifdef FRAUDUCACA_DUMPEAR
 				heap_shit_dumpear(heap_ctx);
 #endif
@@ -870,5 +869,6 @@ int main() {
 			memset(heap_ctx, 0, sizeof(*heap_ctx));
 		}
 	}
+	free(heap_ctx);
 	return 0;
 }
