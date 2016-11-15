@@ -279,7 +279,7 @@ void heap_shit_insert(heap_shit *heap_ctx, tipo_dato element) {
 	heap[heap_size] = element; /*Insert in the last place*/
 	/*Adjust its position*/
 	natural now = heap_size;
-	while (((heap_ctx->min && (char) heap[now / 2] > (char) element)
+	while (((heap_ctx->min &&  (heap[now / 2]==FRAUDUCACA_VALOR_INVALIDO?-1:(int)heap[now / 2]) > (int) element)
 			|| (!heap_ctx->min && (natural) heap[now / 2] < (natural) element))) {
 //printf("caca now %u de heap %u elem %u\n",now,heap[now],element);
 		natural idx_pos = 0;
@@ -517,9 +517,11 @@ void heap_shit_valida_mierda(heap_shit *heap_ctx) {
 int main() {
 	bool es_min = verdadero;
 	heap_shit *heap_ctx = calloc(1, sizeof(heap_shit));
-	tipo_dato cacasos_prueba[][10] = { { 0, 2, 3, 4, 5, 6, 7, 8, 9, 10 }, { 10,
-			9, 8, 7, 6, 5, 4, 3, 2, 0 }, { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }, { 1,
-			2, 3, 4, 5, 6, 7, 8, 9, 10 }, { 10, 9, 8, 7, 6, 5, 4, 2, 1 }, { 1,
+	tipo_dato cacasos_prueba[][10] = { 
+	{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }, 
+	{ 0, 2, 3, 4, 5, 6, 7, 8, 9, 10 }, 
+	{ 10, 9, 8, 7, 6, 5, 4, 3, 2, 0 }, 
+	{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }, { 10, 9, 8, 7, 6, 5, 4, 2, 1 }, { 1,
 			1, 1, 1, 1, 2, 2, 2, 2, 2 }, { 2, 2, 2, 2, 2, 1, 1, 1, 1, 1 }, { 1,
 			1, 1, 2, 2, 2, 2, 3, 3, 3 } };
 	int number_of_elements;
@@ -598,6 +600,10 @@ int main() {
 #ifdef FRAUDUCACA_VALIDAR_ARBOLINES
 					heap_shit_valida_mierda(heap_ctx);
 #endif
+				}
+				if(!(iter%10000))
+				{
+					printf("en iter %u\n",iter);
 				}
 			}
 			heap_shit_fini(heap_ctx);
