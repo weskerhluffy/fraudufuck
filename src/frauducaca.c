@@ -244,256 +244,6 @@ static inline void caca_comun_limpia_bit(bitch_vector *bits,
 /*Declaring heap globally so that we do not need to pass it as an argument every time*/
 
 /* Heap used here is Min Heap */
-#if 1
-typedef unsigned int khint32_t;
-
-typedef unsigned long long khint64_t;
-typedef khint32_t khint_t;
-typedef khint_t khiter_t;
-static const double __ac_HASH_UPPER = 0.77;
-static inline khint_t __ac_X31_hash_string(const char *s) {
-	khint_t h = (khint_t) *s;
-	if (h)
-		for (++s; *s; ++s)
-			h = (h << 5) - h + (khint_t) *s;
-	return h;
-}
-static inline khint_t __ac_Wang_hash(khint_t key) {
-	key += ~(key << 15);
-	key ^= (key >> 10);
-	key += (key << 3);
-	key ^= (key >> 6);
-	key += ~(key << 11);
-	key ^= (key >> 16);
-	return key;
-}
-typedef const char *kh_cstr_t;
-typedef struct kh_caca_s {
-	khint_t n_buckets, size, n_occupied, upper_bound;
-	khint32_t *flags;
-	khint32_t *keys;
-	int *vals;
-} kh_caca_t;
-
-#define kh_key(h, x) ((h)->keys[x])
-#define kh_val(h, x) ((h)->vals[x])
-#define kh_value(h, x) ((h)->vals[x])
-#define kh_begin(h) (khint_t)(0)
-#define kh_end(h) ((h)->n_buckets)
-#define kh_size(h) ((h)->size)
-#define kh_exist(h, x) (!__ac_iseither((h)->flags, (x)))
-
-#define __ac_isempty(flag, i) ((flag[i>>4]>>((i&0xfU)<<1))&2)
-#define __ac_isdel(flag, i) ((flag[i>>4]>>((i&0xfU)<<1))&1)
-#define __ac_iseither(flag, i) ((flag[i>>4]>>((i&0xfU)<<1))&3)
-#define __ac_set_isdel_false(flag, i) (flag[i>>4]&=~(1ul<<((i&0xfU)<<1)))
-#define __ac_set_isempty_false(flag, i) (flag[i>>4]&=~(2ul<<((i&0xfU)<<1)))
-#define __ac_set_isboth_false(flag, i) (flag[i>>4]&=~(3ul<<((i&0xfU)<<1)))
-#define __ac_set_isdel_true(flag, i) (flag[i>>4]|=1ul<<((i&0xfU)<<1))
-#define __ac_fsize(m) ((m) < 16? 1 : (m)>>4)
-
-static inline __attribute__ ((__unused__)) kh_caca_t *kh_init_caca(void) {
-	return (kh_caca_t*) calloc(1, sizeof(kh_caca_t));
-}
-static inline __attribute__ ((__unused__)) void kh_destroy_caca(kh_caca_t *h) {
-	if (h) {
-		free((void *) h->keys);
-		free(h->flags);
-		free((void *) h->vals);
-		free(h);
-	}
-}
-static inline __attribute__ ((__unused__)) void kh_clear_caca(kh_caca_t *h) {
-	if (h && h->flags) {
-		__builtin___memset_chk(h->flags, 0xaa,
-				((h->n_buckets) < 16 ? 1 : (h->n_buckets) >> 4)
-						* sizeof(khint32_t),
-				__builtin_object_size(h->flags, 0));
-		h->size = h->n_occupied = 0;
-	}
-}
-static inline __attribute__ ((__unused__)) khint_t kh_get_caca(
-		const kh_caca_t *h, khint32_t key) {
-	if (h->n_buckets) {
-		khint_t k, i, last, mask, step = 0;
-		mask = h->n_buckets - 1;
-		k = (khint32_t) (key);
-		i = k & mask;
-		last = i;
-		while (!((h->flags[i >> 4] >> ((i & 0xfU) << 1)) & 2)
-				&& (((h->flags[i >> 4] >> ((i & 0xfU) << 1)) & 1)
-						|| !((h->keys[i]) == (key)))) {
-			i = (i + (++step)) & mask;
-			if (i == last)
-				return h->n_buckets;
-		}
-		return ((h->flags[i >> 4] >> ((i & 0xfU) << 1)) & 3) ? h->n_buckets : i;
-	} else
-		return 0;
-}
-static inline __attribute__ ((__unused__)) int kh_resize_caca(kh_caca_t *h,
-		khint_t new_n_buckets) {
-	khint32_t *new_flags = 0;
-	khint_t j = 1;
-	{
-		(--(new_n_buckets), (new_n_buckets) |= (new_n_buckets) >> 1, (new_n_buckets) |=
-				(new_n_buckets) >> 2, (new_n_buckets) |= (new_n_buckets) >> 4, (new_n_buckets) |=
-				(new_n_buckets) >> 8, (new_n_buckets) |= (new_n_buckets) >> 16, ++(new_n_buckets));
-		if (new_n_buckets < 4)
-			new_n_buckets = 4;
-		if (h->size >= (khint_t) (new_n_buckets * __ac_HASH_UPPER + 0.5))
-			j = 0;
-		else {
-			new_flags = (khint32_t*) malloc(
-					((new_n_buckets) < 16 ? 1 : (new_n_buckets) >> 4)
-							* sizeof(khint32_t));
-			if (!new_flags)
-				return -1;
-			__builtin___memset_chk(new_flags, 0xaa,
-					((new_n_buckets) < 16 ? 1 : (new_n_buckets) >> 4)
-							* sizeof(khint32_t),
-					__builtin_object_size(new_flags, 0));
-			if (h->n_buckets < new_n_buckets) {
-				khint32_t *new_keys = (khint32_t*) realloc((void *) h->keys,
-						new_n_buckets * sizeof(khint32_t));
-				if (!new_keys) {
-					free(new_flags);
-					return -1;
-				}
-				h->keys = new_keys;
-				if (1) {
-					int *new_vals = (int*) realloc((void *) h->vals,
-							new_n_buckets * sizeof(int));
-					if (!new_vals) {
-						free(new_flags);
-						return -1;
-					}
-					h->vals = new_vals;
-				}
-			}
-		}
-	}
-	if (j) {
-		for (j = 0; j != h->n_buckets; ++j) {
-			if (((h->flags[j >> 4] >> ((j & 0xfU) << 1)) & 3) == 0) {
-				khint32_t key = h->keys[j];
-				int val;
-				khint_t new_mask;
-				new_mask = new_n_buckets - 1;
-				if (1)
-					val = h->vals[j];
-				(h->flags[j >> 4] |= 1ul << ((j & 0xfU) << 1));
-				while (1) {
-					khint_t k, i, step = 0;
-					k = (khint32_t) (key);
-					i = k & new_mask;
-					while (!((new_flags[i >> 4] >> ((i & 0xfU) << 1)) & 2))
-						i = (i + (++step)) & new_mask;
-					(new_flags[i >> 4] &= ~(2ul << ((i & 0xfU) << 1)));
-					if (i < h->n_buckets
-							&& ((h->flags[i >> 4] >> ((i & 0xfU) << 1)) & 3)
-									== 0) {
-						{
-							khint32_t tmp = h->keys[i];
-							h->keys[i] = key;
-							key = tmp;
-						}
-						if (1) {
-							int tmp = h->vals[i];
-							h->vals[i] = val;
-							val = tmp;
-						}
-						(h->flags[i >> 4] |= 1ul << ((i & 0xfU) << 1));
-					} else {
-						h->keys[i] = key;
-						if (1)
-							h->vals[i] = val;
-						break;
-					}
-				}
-			}
-		}
-		if (h->n_buckets > new_n_buckets) {
-			h->keys = (khint32_t*) realloc((void *) h->keys,
-					new_n_buckets * sizeof(khint32_t));
-			if (1)
-				h->vals = (int*) realloc((void *) h->vals,
-						new_n_buckets * sizeof(int));
-		}
-		free(h->flags);
-		h->flags = new_flags;
-		h->n_buckets = new_n_buckets;
-		h->n_occupied = h->size;
-		h->upper_bound = (khint_t) (h->n_buckets * __ac_HASH_UPPER + 0.5);
-	}
-	return 0;
-}
-static inline __attribute__ ((__unused__)) khint_t kh_put_caca(kh_caca_t *h,
-		khint32_t key, int *ret) {
-	khint_t x;
-	if (h->n_occupied >= h->upper_bound) {
-		if (h->n_buckets > (h->size << 1)) {
-			if (kh_resize_caca(h, h->n_buckets - 1) < 0) {
-				*ret = -1;
-				return h->n_buckets;
-			}
-		} else if (kh_resize_caca(h, h->n_buckets + 1) < 0) {
-			*ret = -1;
-			return h->n_buckets;
-		}
-	}
-	{
-		khint_t k, i, site, last, mask = h->n_buckets - 1, step = 0;
-		x = site = h->n_buckets;
-		k = (khint32_t) (key);
-		i = k & mask;
-		if (((h->flags[i >> 4] >> ((i & 0xfU) << 1)) & 2))
-			x = i;
-		else {
-			last = i;
-			while (!((h->flags[i >> 4] >> ((i & 0xfU) << 1)) & 2)
-					&& (((h->flags[i >> 4] >> ((i & 0xfU) << 1)) & 1)
-							|| !((h->keys[i]) == (key)))) {
-				if (((h->flags[i >> 4] >> ((i & 0xfU) << 1)) & 1))
-					site = i;
-				i = (i + (++step)) & mask;
-				if (i == last) {
-					x = site;
-					break;
-				}
-			}
-			if (x == h->n_buckets) {
-				if (((h->flags[i >> 4] >> ((i & 0xfU) << 1)) & 2)
-						&& site != h->n_buckets)
-					x = site;
-				else
-					x = i;
-			}
-		}
-	}
-	if (((h->flags[x >> 4] >> ((x & 0xfU) << 1)) & 2)) {
-		h->keys[x] = key;
-		(h->flags[x >> 4] &= ~(3ul << ((x & 0xfU) << 1)));
-		++h->size;
-		++h->n_occupied;
-		*ret = 1;
-	} else if (((h->flags[x >> 4] >> ((x & 0xfU) << 1)) & 1)) {
-		h->keys[x] = key;
-		(h->flags[x >> 4] &= ~(3ul << ((x & 0xfU) << 1)));
-		++h->size;
-		*ret = 2;
-	} else
-		*ret = 0;
-	return x;
-}
-static inline __attribute__ ((__unused__)) void kh_del_caca(kh_caca_t *h,
-		khint_t x) {
-	if (x != h->n_buckets && !((h->flags[x >> 4] >> ((x & 0xfU) << 1)) & 3)) {
-		(h->flags[x >> 4] |= 1ul << ((x & 0xfU) << 1));
-		--h->size;
-	}
-}
-#endif
 
 #if 1
 
@@ -503,7 +253,7 @@ typedef struct heap_shit {
 	tipo_dato heap[FRAUDUCACA_MAX_NUMEROS_POR_HEAP];
 	natural indices_valores[MAX_INDEX][MAX_NUMEROS];
 	natural num_indices_valores[MAX_INDEX];
-	kh_caca_t *tablin_idx_pos_en_heap;
+	natural mapeo_idx_heap_a_pos_ocurrencia[MAX_NUMEROS];
 } heap_shit;
 
 /*Initialize Heap*/
@@ -511,19 +261,18 @@ void heap_shit_init(heap_shit *heap, bool es_min) {
 	heap->heap_size = 0;
 	heap->min = es_min;
 	heap->heap[0] = FRAUDUCACA_VALOR_INVALIDO;
-	heap->tablin_idx_pos_en_heap = kh_init_caca();
+	memset(heap->mapeo_idx_heap_a_pos_ocurrencia,FRAUDUCACA_VALOR_INVALIDO,sizeof(heap->mapeo_idx_heap_a_pos_ocurrencia));
 }
 
 void heap_shit_fini(heap_shit *heap_ctx) {
-	kh_destroy_caca(heap_ctx->tablin_idx_pos_en_heap);
+	memset(heap_ctx->mapeo_idx_heap_a_pos_ocurrencia,FRAUDUCACA_VALOR_INVALIDO,sizeof(heap_ctx->mapeo_idx_heap_a_pos_ocurrencia));
 }
 
 /*Insert an element into the heap */
 void heap_shit_insert(heap_shit *heap_ctx, tipo_dato element) {
 	natural heap_size = ++heap_ctx->heap_size;
-	int ret = 0;
-	khiter_t iter = 0;
 	tipo_dato *heap = NULL;
+	natural *mapeo_inv=heap_ctx->mapeo_idx_heap_a_pos_ocurrencia;
 
 	heap = heap_ctx->heap;
 
@@ -534,23 +283,22 @@ void heap_shit_insert(heap_shit *heap_ctx, tipo_dato element) {
 			|| (!heap_ctx->min && (natural) heap[now / 2] < (natural) element))) {
 //printf("caca now %u de heap %u elem %u\n",now,heap[now],element);
 		natural idx_pos = 0;
-		iter = kh_get_caca(heap_ctx->tablin_idx_pos_en_heap, now / 2);
-		assert_timeout(iter!=kh_end(heap_ctx->tablin_idx_pos_en_heap));
-		idx_pos = kh_val(heap_ctx->tablin_idx_pos_en_heap,iter);
+		idx_pos = mapeo_inv[now/2];
+		assert_timeout(idx_pos!=FRAUDUCACA_VALOR_INVALIDO);
+
 		heap_ctx->indices_valores[heap[now / 2]][idx_pos] = now;
-		kh_del_caca(heap_ctx->tablin_idx_pos_en_heap, iter);
-		iter = kh_put_caca(heap_ctx->tablin_idx_pos_en_heap, now, &ret);
-		assert_timeout(ret);
-		kh_value(heap_ctx->tablin_idx_pos_en_heap, iter)= idx_pos;
+		
+		mapeo_inv[now/2]=FRAUDUCACA_VALOR_INVALIDO;
+
+		mapeo_inv[now]=idx_pos;
 
 		heap[now] = heap[now / 2];
 		now /= 2;
 	}
 //printf("raise now %u con heap %u y elem %u res %u\n",now,heap[now / 2],element, (unsigned int)heap[now / 2]>(unsigned int)element);	
 
-	iter = kh_put_caca(heap_ctx->tablin_idx_pos_en_heap, now, &ret);
-	assert_timeout(ret);
-	kh_value(heap_ctx->tablin_idx_pos_en_heap, iter)= heap_ctx->num_indices_valores[element];
+	mapeo_inv[now]=heap_ctx->num_indices_valores[element];
+
 	heap[now] = element;
 	heap_ctx->indices_valores[element][heap_ctx->num_indices_valores[element]++] =
 			now;
@@ -560,20 +308,19 @@ void heap_shit_insert(heap_shit *heap_ctx, tipo_dato element) {
 
 tipo_dato heap_shit_delete(heap_shit *heap_ctx) {
 	natural heap_size = heap_ctx->heap_size;
-	int ret = 0;
 	natural idx_pos = 0;
 	natural idx_pos_las_elem_ocur = FRAUDUCACA_VALOR_INVALIDO;
-	khiter_t iter = 0;
 	natural child, now;
 	tipo_dato minElement, lastElement;
 	tipo_dato *heap;
+	natural *mapeo_inv=heap_ctx->mapeo_idx_heap_a_pos_ocurrencia;
+
 	heap = heap_ctx->heap;
 
 	if (heap_size > 1) {
-		iter = kh_get_caca(heap_ctx->tablin_idx_pos_en_heap, heap_size);
-		assert_timeout(iter!=kh_end(heap_ctx->tablin_idx_pos_en_heap));
-		idx_pos_las_elem_ocur = kh_val(heap_ctx->tablin_idx_pos_en_heap,iter);
-		kh_del_caca(heap_ctx->tablin_idx_pos_en_heap, iter);
+		idx_pos_las_elem_ocur=mapeo_inv[heap_size];
+		assert_timeout(idx_pos_las_elem_ocur!=FRAUDUCACA_VALOR_INVALIDO);
+		mapeo_inv[heap_size]=FRAUDUCACA_VALOR_INVALIDO;
 		caca_log_debug("el mapeo inverso del ultimo elemento %u es %u",
 				heap_size, idx_pos_las_elem_ocur);
 	}
@@ -585,10 +332,11 @@ tipo_dato heap_shit_delete(heap_shit *heap_ctx) {
 	minElement = heap[1];
 	lastElement = heap[heap_size--];
 
-	iter = kh_get_caca(heap_ctx->tablin_idx_pos_en_heap, 1);
-	assert_timeout(iter!=kh_end(heap_ctx->tablin_idx_pos_en_heap));
-	idx_pos = kh_val(heap_ctx->tablin_idx_pos_en_heap,iter);
-	kh_del_caca(heap_ctx->tablin_idx_pos_en_heap, iter);
+	idx_pos=mapeo_inv[1];
+	assert_timeout(idx_pos!=FRAUDUCACA_VALOR_INVALIDO);
+	
+	mapeo_inv[1]=FRAUDUCACA_VALOR_INVALIDO;
+
 	caca_log_debug("el mapeo inverso del tope que se elimina %u es %u", 1,
 			idx_pos);
 	if (heap_ctx->num_indices_valores[minElement] > 1
@@ -605,12 +353,7 @@ tipo_dato heap_shit_delete(heap_shit *heap_ctx) {
 					FRAUDUCACA_VALOR_INVALIDO;
 			idx_pos_las_elem_ocur = idx_pos;
 		} else {
-			iter = kh_get_caca(heap_ctx->tablin_idx_pos_en_heap,
-					idx_ocurrencia_ultimo);
-			caca_log_debug("el iter de la pos %u de %u es %u",
-					idx_ocurrencia_ultimo, minElement, iter);
-			assert_timeout(iter!=kh_end(heap_ctx->tablin_idx_pos_en_heap));
-			kh_val(heap_ctx->tablin_idx_pos_en_heap,iter)=idx_pos;
+			mapeo_inv[idx_ocurrencia_ultimo]=idx_pos;
 		}
 		heap_ctx->indices_valores[minElement][heap_ctx->num_indices_valores[minElement]
 				+ 1] = 0;
@@ -637,14 +380,14 @@ tipo_dato heap_shit_delete(heap_shit *heap_ctx) {
 //printf("last %u heap %u\n",lastElement,heap[child]);
 		if ((heap_ctx->min && lastElement > heap[child])
 				|| (!heap_ctx->min && lastElement < heap[child])) {
-			iter = kh_get_caca(heap_ctx->tablin_idx_pos_en_heap, child);
-			assert_timeout(iter!=kh_end(heap_ctx->tablin_idx_pos_en_heap));
-			idx_pos = kh_val(heap_ctx->tablin_idx_pos_en_heap,iter);
+			idx_pos=mapeo_inv[child];
+			assert_timeout(idx_pos!=FRAUDUCACA_VALOR_INVALIDO);
+
 			heap_ctx->indices_valores[heap[child]][idx_pos] = now;
-			kh_del_caca(heap_ctx->tablin_idx_pos_en_heap, iter);
-			iter = kh_put_caca(heap_ctx->tablin_idx_pos_en_heap, now, &ret);
-			assert_timeout(ret);
-			kh_value(heap_ctx->tablin_idx_pos_en_heap, iter)= idx_pos;
+
+			mapeo_inv[child]=FRAUDUCACA_VALOR_INVALIDO;
+
+			mapeo_inv[now]=idx_pos;
 
 			heap[now] = heap[child];
 		} else /* It fits there */
@@ -654,9 +397,7 @@ tipo_dato heap_shit_delete(heap_shit *heap_ctx) {
 	}
 
 	if (idx_pos_las_elem_ocur != FRAUDUCACA_VALOR_INVALIDO) {
-		iter = kh_put_caca(heap_ctx->tablin_idx_pos_en_heap, now, &ret);
-		assert_timeout(ret);
-		kh_val(heap_ctx->tablin_idx_pos_en_heap,iter)=idx_pos_las_elem_ocur;
+		mapeo_inv[now]=idx_pos_las_elem_ocur;
 		heap_ctx->indices_valores[lastElement][idx_pos_las_elem_ocur] = now;
 	}
 	heap[now] = lastElement;
@@ -666,15 +407,13 @@ tipo_dato heap_shit_delete(heap_shit *heap_ctx) {
 
 void heap_shit_dumpear(heap_shit *heap_ctx) {
 	natural heap_size = heap_ctx->heap_size;
-	kh_caca_t *h = NULL;
+	natural *mapeo_inv=heap_ctx->mapeo_idx_heap_a_pos_ocurrencia;
 	for (int i = 0; i <= heap_size; i++) {
 		caca_log_debug("mierda %u es %u", i, heap_ctx->heap[i]);
 	}
-	h = heap_ctx->tablin_idx_pos_en_heap;
 	caca_log_debug("los mapeos inversos:");
-	for (int k = kh_begin(h); k != kh_end(h); ++k) {
-		if (kh_exist(h, k))
-			caca_log_debug("la llave %u mapea a %u", kh_key(h,k), kh_val(h,k));
+	for (int i=0;i<MAX_NUMEROS;i++){
+		caca_log_debug("la llave %u mapea a %u", i, mapeo_inv[i]);
 	}
 	caca_log_debug("las ocurrencias de cada pendejo:");
 	for (int i = 0; i < MAX_INDEX; i++) {
@@ -692,7 +431,7 @@ void heap_shit_valida_referencias_inversas(heap_shit *heap_ctx) {
 	tipo_dato *heap = heap_ctx->heap;
 	natural (*indices_valores)[MAX_NUMEROS] = heap_ctx->indices_valores;
 	natural *num_indices_valores = heap_ctx->num_indices_valores;
-	kh_caca_t *tablin_idx_pos_en_heap = heap_ctx->tablin_idx_pos_en_heap;
+	natural *mapeo_inv=heap_ctx->mapeo_idx_heap_a_pos_ocurrencia;
 	bitch_vector valores_ya_validados[(MAX_NUMEROS / 64) + 1] = { 0 };
 	for (int i = 1; i < heap_size + 1; i++) {
 		tipo_dato num_act = heap[i];
@@ -701,8 +440,6 @@ void heap_shit_valida_referencias_inversas(heap_shit *heap_ctx) {
 		if (num_indices_valores_act
 				&& !caca_comun_checa_bit(valores_ya_validados, num_act)) {
 			for (int j = 0; j < num_indices_valores_act; j++) {
-				int ret = 0;
-				khiter_t iter = 0;
 				tipo_dato num_act_ocu = 0;
 				natural indice_valor_act = 0;
 				natural indice_pos_ocurrencia_en_mapa = 0;
@@ -711,10 +448,9 @@ void heap_shit_valida_referencias_inversas(heap_shit *heap_ctx) {
 				num_act_ocu = heap[indice_valor_act];
 				assert_timeout(num_act_ocu == num_act);
 
-				iter = kh_get_caca(tablin_idx_pos_en_heap, indice_valor_act);
-				assert_timeout(iter!=kh_end(tablin_idx_pos_en_heap));
-				indice_pos_ocurrencia_en_mapa =
-						kh_val(tablin_idx_pos_en_heap,iter);
+				indice_pos_ocurrencia_en_mapa =mapeo_inv[indice_valor_act];
+				assert_timeout(indice_pos_ocurrencia_en_mapa!=FRAUDUCACA_VALOR_INVALIDO);
+
 				assert_timeout(j == indice_pos_ocurrencia_en_mapa);
 
 				num_elems++;
@@ -723,24 +459,23 @@ void heap_shit_valida_referencias_inversas(heap_shit *heap_ctx) {
 		}
 	}
 	assert_timeout(heap_size == num_elems);
-	kh_caca_t *h = tablin_idx_pos_en_heap;
-	for (int k = kh_begin(h); k != kh_end(h); ++k) {
-		if (kh_exist(h, k)) {
+	for (int i=0;i<MAX_NUMEROS;i++){
 			natural idx_en_heap = 0;
 			natural idx_en_pos_ocurrencias = 0;
 			natural num_indices_valores_act = 0;
 			tipo_dato num_act = 0;
 
-			idx_en_heap = kh_key(h,k);
-			idx_en_pos_ocurrencias = kh_val(h,k);
+			idx_en_heap = i;
+			idx_en_pos_ocurrencias = mapeo_inv[i];
+			if(idx_en_pos_ocurrencias!=FRAUDUCACA_VALOR_INVALIDO)
+			{
+ 				num_act = heap[idx_en_heap];
 
-			num_act = heap[idx_en_heap];
+				num_indices_valores_act = num_indices_valores[num_act];
+				assert_timeout(idx_en_pos_ocurrencias < num_indices_valores_act);
 
-			num_indices_valores_act = num_indices_valores[num_act];
-			assert_timeout(idx_en_pos_ocurrencias < num_indices_valores_act);
-
-			num_elems_mapeo++;
-		}
+				num_elems_mapeo++;
+			}
 	}
 
 	assert_timeout(heap_size == num_elems_mapeo);
