@@ -279,7 +279,7 @@ void heap_shit_insert(heap_shit *heap_ctx, tipo_dato element) {
 	heap[heap_size] = element; /*Insert in the last place*/
 	/*Adjust its position*/
 	natural now = heap_size;
-	while (((heap_ctx->min &&  (heap[now / 2]==FRAUDUCACA_VALOR_INVALIDO?-1:(int)heap[now / 2]) > (int) element)
+	while (((heap_ctx->min &&  (heap[now / 2]==(tipo_dato)FRAUDUCACA_VALOR_INVALIDO?-1:(int)heap[now / 2]) > (int) element)
 			|| (!heap_ctx->min && (natural) heap[now / 2] < (natural) element))) {
 //printf("caca now %u de heap %u elem %u\n",now,heap[now],element);
 		natural idx_pos = 0;
