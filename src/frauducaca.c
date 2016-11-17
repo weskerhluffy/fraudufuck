@@ -36,7 +36,7 @@ typedef enum BOOLEANOS {
 
 #define FRAUDUCACA_BUF_STATICO (char[10000] ) { '\0' }
 
-#define FRAUDUCACA_VALIDAR_ARBOLINES
+//#define FRAUDUCACA_VALIDAR_ARBOLINES
 //#define FRAUDUCACA_DUMPEAR
 
 #ifdef FRAUDUCACA_VALIDAR_ARBOLINES
@@ -306,7 +306,7 @@ void heap_shit_insert(heap_shit *heap_ctx, tipo_dato element) {
 //tablin_idx_pos_en_heap
 }
 
-tipo_dato heap_shit_delete(heap_shit *heap_ctx) {
+tipo_dato heap_shit_delete(heap_shit *heap_ctx, natural idx_a_borrar) {
 	natural heap_size = heap_ctx->heap_size;
 	natural idx_pos = 0;
 	natural idx_pos_las_elem_ocur = FRAUDUCACA_VALOR_INVALIDO;
@@ -329,15 +329,15 @@ tipo_dato heap_shit_delete(heap_shit *heap_ctx) {
 	 Now heap[1] has to be filled. We put the last element in its place and see if it fits.
 	 If it does not fit, take minimum element among both its children and replaces parent with it.
 	 Again See if the last element fits in that place.*/
-	minElement = heap[1];
+	minElement = heap[idx_a_borrar];
 	lastElement = heap[heap_size--];
 
-	idx_pos=mapeo_inv[1];
+	idx_pos=mapeo_inv[idx_a_borrar];
 	assert_timeout(idx_pos!=FRAUDUCACA_VALOR_INVALIDO);
 	
-	mapeo_inv[1]=FRAUDUCACA_VALOR_INVALIDO;
+	mapeo_inv[idx_a_borrar]=FRAUDUCACA_VALOR_INVALIDO;
 
-	caca_log_debug("el mapeo inverso del tope que se elimina %u es %u", 1,
+	caca_log_debug("el mapeo inverso del tope que se elimina %u es %u", idx_a_borrar,
 			idx_pos);
 	if (heap_ctx->num_indices_valores[minElement] > 1
 			&& idx_pos != (heap_ctx->num_indices_valores[minElement] - 1)) {
@@ -364,7 +364,7 @@ tipo_dato heap_shit_delete(heap_shit *heap_ctx) {
 	}
 
 	/* now refers to the index at which we are now */
-	for (now = 1; now * 2 <= heap_size; now = child) {
+	for (now = idx_a_borrar; now * 2 <= heap_size; now = child) {
 		/* child is the index of the element which is minimum among both the children */
 		/* Indexes of children are i*2 and i*2 + 1*/
 		child = now * 2;
@@ -403,6 +403,22 @@ tipo_dato heap_shit_delete(heap_shit *heap_ctx) {
 	heap[now] = lastElement;
 	heap_ctx->heap_size = heap_size;
 	return minElement;
+}
+
+void heap_shit_borrar_directo(heap_shit *heap_ctx, tipo_dato num_a_borrar) {
+	natural heap_size = heap_ctx->heap_size;
+	natural (*indices_valores)[MAX_NUMEROS]=heap_ctx->indices_valores;
+	natural *num_indices_valores=heap_ctx->num_indices_valores;
+	assert_timeout(heap_size);
+
+	natural num_ocurrencias=num_indices_valores[num_a_borrar];
+	assert_timeout(num_ocurrencias);
+	natural idx_a_borrar=indices_valores[num_a_borrar][--num_ocurrencias];
+	assert_timeout(idx_a_borrar!=FRAUDUCACA_VALOR_INVALIDO);
+
+	num_indices_valores[num_a_borrar]=num_ocurrencias;
+
+	heap_shit_delete(heap_ctx, idx_a_borrar);
 }
 
 void heap_shit_dumpear(heap_shit *heap_ctx) {
@@ -551,7 +567,7 @@ int main() {
 #endif
 			}
 			for (iter = 0; iter < number_of_elements; iter++) {
-				printf("%d ", heap_shit_delete(heap_ctx));
+				printf("%d ", heap_shit_delete(heap_ctx,1));
 				caca_log_debug("dumpeando cabron del caso %u min %u iter %u", i,
 						j, iter);
 #ifdef FRAUDUCACA_DUMPEAR
@@ -575,7 +591,7 @@ int main() {
 				heap_shit_valida_mierda(heap_ctx);
 #endif
 				if (iter % 2) {
-					heap_shit_delete(heap_ctx);
+					heap_shit_delete(heap_ctx,1);
 #ifdef FRAUDUCACA_VALIDAR_ARBOLINES
 					heap_shit_valida_mierda(heap_ctx);
 #endif
@@ -595,8 +611,15 @@ int main() {
 #ifdef FRAUDUCACA_VALIDAR_ARBOLINES
 				heap_shit_valida_mierda(heap_ctx);
 #endif
+				if(heap_ctx->heap_size && !(iter%101))
+				{
+					heap_shit_borrar_directo(heap_ctx,heap_ctx->heap[2]);
+#ifdef FRAUDUCACA_VALIDAR_ARBOLINES
+					heap_shit_valida_mierda(heap_ctx);
+#endif
+				}
 				if (iter % 4) {
-					heap_shit_delete(heap_ctx);
+					heap_shit_delete(heap_ctx,1);
 #ifdef FRAUDUCACA_VALIDAR_ARBOLINES
 					heap_shit_valida_mierda(heap_ctx);
 #endif
