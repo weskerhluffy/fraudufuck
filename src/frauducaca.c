@@ -36,7 +36,7 @@ typedef enum BOOLEANOS {
 
 #define FRAUDUCACA_BUF_STATICO (char[10000] ) { '\0' }
 
-//#define FRAUDUCACA_VALIDAR_ARBOLINES
+#define FRAUDUCACA_VALIDAR_ARBOLINES
 //#define FRAUDUCACA_DUMPEAR
 
 #ifdef FRAUDUCACA_VALIDAR_ARBOLINES
@@ -317,7 +317,8 @@ tipo_dato heap_shit_delete(heap_shit *heap_ctx, natural idx_a_borrar) {
 
 	heap = heap_ctx->heap;
 
-	if (heap_size > 1) {
+	assert_timeout(heap_size>=idx_a_borrar);
+	if (heap_size > idx_a_borrar) {
 		idx_pos_las_elem_ocur=mapeo_inv[heap_size];
 		assert_timeout(idx_pos_las_elem_ocur!=FRAUDUCACA_VALOR_INVALIDO);
 		mapeo_inv[heap_size]=FRAUDUCACA_VALOR_INVALIDO;
@@ -363,36 +364,61 @@ tipo_dato heap_shit_delete(heap_shit *heap_ctx, natural idx_a_borrar) {
 				0;
 	}
 
-	/* now refers to the index at which we are now */
-	for (now = idx_a_borrar; now * 2 <= heap_size; now = child) {
-		/* child is the index of the element which is minimum among both the children */
-		/* Indexes of children are i*2 and i*2 + 1*/
-		child = now * 2;
-		/*child!=heap_size beacuse heap[heap_size+1] does not exist, which means it has only one
-		 child */
-		if (child != heap_size
-				&& ((heap_ctx->min && heap[child + 1] < heap[child])
-						|| (!heap_ctx->min && heap[child + 1] > heap[child]))) {
-			child++;
-		}
-		/* To check if the last element fits ot not it suffices to check if the last element
-		 is less than the minimum element among both the children*/
-//printf("last %u heap %u\n",lastElement,heap[child]);
-		if ((heap_ctx->min && lastElement > heap[child])
-				|| (!heap_ctx->min && lastElement < heap[child])) {
-			idx_pos=mapeo_inv[child];
+	now = idx_a_borrar;
+	if(((heap_ctx->min 
+	     &&  (heap[now>>1]==(tipo_dato)FRAUDUCACA_VALOR_INVALIDO?-1:(int)heap[now>>1]) > (int) lastElement)
+	   || (!heap_ctx->min && (natural) heap[now>>1] < (natural) lastElement))) {
+		while (((heap_ctx->min &&  (heap[now / 2]==(tipo_dato)FRAUDUCACA_VALOR_INVALIDO?-1:(int)heap[now / 2]) > (int) lastElement)
+				|| (!heap_ctx->min && (natural) heap[now / 2] < (natural) lastElement))) {
+	//printf("caca now %u de heap %u elem %u\n",now,heap[now],element);
+			natural idx_pos = 0;
+			idx_pos = mapeo_inv[now/2];
 			assert_timeout(idx_pos!=FRAUDUCACA_VALOR_INVALIDO);
 
-			heap_ctx->indices_valores[heap[child]][idx_pos] = now;
-
-			mapeo_inv[child]=FRAUDUCACA_VALOR_INVALIDO;
+			heap_ctx->indices_valores[heap[now / 2]][idx_pos] = now;
+			
+			mapeo_inv[now/2]=FRAUDUCACA_VALOR_INVALIDO;
 
 			mapeo_inv[now]=idx_pos;
 
-			heap[now] = heap[child];
-		} else /* It fits there */
-		{
-			break;
+			heap[now] = heap[now / 2];
+			now /= 2;
+		}
+	}
+	else
+	{
+
+		/* now refers to the index at which we are now */
+		for (now = idx_a_borrar; now * 2 <= heap_size; now = child) {
+			/* child is the index of the element which is minimum among both the children */
+			/* Indexes of children are i*2 and i*2 + 1*/
+			child = now * 2;
+			/*child!=heap_size beacuse heap[heap_size+1] does not exist, which means it has only one
+			 child */
+			if (child != heap_size
+					&& ((heap_ctx->min && heap[child + 1] < heap[child])
+							|| (!heap_ctx->min && heap[child + 1] > heap[child]))) {
+				child++;
+			}
+			/* To check if the last element fits ot not it suffices to check if the last element
+			 is less than the minimum element among both the children*/
+	//printf("last %u heap %u\n",lastElement,heap[child]);
+			if ((heap_ctx->min && lastElement > heap[child])
+					|| (!heap_ctx->min && lastElement < heap[child])) {
+				idx_pos=mapeo_inv[child];
+				assert_timeout(idx_pos!=FRAUDUCACA_VALOR_INVALIDO);
+
+				heap_ctx->indices_valores[heap[child]][idx_pos] = now;
+
+				mapeo_inv[child]=FRAUDUCACA_VALOR_INVALIDO;
+
+				mapeo_inv[now]=idx_pos;
+
+				heap[now] = heap[child];
+			} else /* It fits there */
+			{
+				break;
+			}
 		}
 	}
 
@@ -415,8 +441,6 @@ void heap_shit_borrar_directo(heap_shit *heap_ctx, tipo_dato num_a_borrar) {
 	assert_timeout(num_ocurrencias);
 	natural idx_a_borrar=indices_valores[num_a_borrar][--num_ocurrencias];
 	assert_timeout(idx_a_borrar!=FRAUDUCACA_VALOR_INVALIDO);
-
-	num_indices_valores[num_a_borrar]=num_ocurrencias;
 
 	heap_shit_delete(heap_ctx, idx_a_borrar);
 }
