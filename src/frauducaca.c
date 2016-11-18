@@ -99,7 +99,7 @@ void caca_comun_current_utc_time(struct timespec *ts) {
 	ts->tv_nsec = mts.tv_nsec;
 #else
 #ifndef ONLINE_JUDGE
-	clock_gettime(CLOCK_REALTIME, ts);
+	//clock_gettime(CLOCK_REALTIME, ts);
 #endif
 #endif
 
