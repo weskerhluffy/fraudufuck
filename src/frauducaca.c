@@ -642,6 +642,21 @@ int main() {
 					heap_shit_valida_mierda(heap_ctx);
 #endif
 				}
+				if(heap_ctx->heap_size && !(iter%1003))
+				{
+					heap_shit_borrar_directo(heap_ctx,heap_ctx->heap[heap_ctx->heap_size-2]);
+#ifdef FRAUDUCACA_VALIDAR_ARBOLINES
+					heap_shit_valida_mierda(heap_ctx);
+#endif
+				}
+
+				if(heap_ctx->heap_size && !(iter%1017))
+				{
+					heap_shit_borrar_directo(heap_ctx,heap_ctx->heap[heap_ctx->heap_size>>1]);
+#ifdef FRAUDUCACA_VALIDAR_ARBOLINES
+					heap_shit_valida_mierda(heap_ctx);
+#endif
+				}
 				if (iter % 4) {
 					heap_shit_delete(heap_ctx,1);
 #ifdef FRAUDUCACA_VALIDAR_ARBOLINES
