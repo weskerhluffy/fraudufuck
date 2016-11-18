@@ -37,7 +37,7 @@ typedef enum BOOLEANOS {
 
 #define FRAUDUCACA_BUF_STATICO (char[10000] ) { '\0' }
 
-#define FRAUDUCACA_VALIDAR_ARBOLINES
+//#define FRAUDUCACA_VALIDAR_ARBOLINES
 //#define FRAUDUCACA_DUMPEAR
 
 #ifdef FRAUDUCACA_VALIDAR_ARBOLINES
@@ -628,7 +628,7 @@ natural frauducaca_core(heap_shit *heap_izq, heap_shit *heap_der,
 		heap_shit *heap_con_exceso = NULL;
 		heap_shit *heap_con_deficit_de_atencion = NULL;
 
-		if (num_sale << 1 <= medi_ano_act) {
+		if (num_sale < heap_der->heap[1]) {
 			cambio_izq--;
 			heap_que_pierde = heap_izq;
 			caca_log_debug("el izq pierde %u", num_sale);
@@ -639,7 +639,7 @@ natural frauducaca_core(heap_shit *heap_izq, heap_shit *heap_der,
 		}
 		heap_shit_borrar_directo(heap_que_pierde, num_sale);
 
-		if (num_entra << 1 <= medi_ano_act) {
+		if (num_entra  < heap_der->heap[1]) {
 			cambio_izq++;
 			heap_que_gana = heap_izq;
 			caca_log_debug("el izq gana %u", num_entra);
@@ -739,7 +739,7 @@ void frauducaca_main() {
 
 	assert_timeout(num_numeros > tam_ventana);
 
-	es_par = !(num_numeros % 2);
+	es_par = !(tam_ventana% 2);
 
 	heap_izq = calloc(1, sizeof(heap_shit));
 	assert_timeout(heap_izq);
