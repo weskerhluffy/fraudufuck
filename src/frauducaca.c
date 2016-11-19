@@ -1,4 +1,5 @@
 //https://www.hackerrank.com/challenges/fraudulent-activity-notifications
+
 #include<stdio.h>
 #include<limits.h>
 #include <stdlib.h>
@@ -290,6 +291,8 @@ static inline int caca_comun_lee_matrix_char_stdin(tipo_dato *matrix,
 /* Heap used here is Min Heap */
 
 #if 1
+
+//http://www.thelearningpoint.net/computer-science/data-structures-heaps-with-c-program-source-code
 
 typedef struct heap_shit {
 	bool min;
